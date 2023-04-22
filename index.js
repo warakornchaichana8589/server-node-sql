@@ -42,8 +42,8 @@ app.post('/add/admin',(req, res) => {
 })
 app.post('/add/project',(req, res) => {
     connection.query(
-        'INSERT INTO `project` (`name`, `description`) VALUES (?, ?)',
-        [req.body.name, req.body.description],
+        'INSERT INTO `project` (`name`, `description`, `project_image`) VALUES (?, ?, ?)',
+        [req.body.name, req.body.description, req.body.project_image],
             function (err, results) {
             res.json(results);
 }
