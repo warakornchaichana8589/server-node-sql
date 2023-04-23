@@ -48,7 +48,7 @@ app.post("/register",(req, res) => {
   });
 });
 app.post("/login", (req, res) => {
-  connection.execute(
+  connection.query(
     "SELECT * FROM admin WHERE email=?",
     [req.body.email],
     function (err, users, fields) {
