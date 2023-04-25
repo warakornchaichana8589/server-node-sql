@@ -8,7 +8,7 @@ const connection = mysql.createConnection(process.env.DATABASE_URL);
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json())
+app.use(bodyParser.json());
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 var jwt = require("jsonwebtoken");
@@ -32,7 +32,7 @@ app.post("/add/project", (req, res) => {
   );
 });
 
-app.post("/register",(req, res) => {
+app.post("/register", (req, res) => {
   bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
     connection.query(
       "INSERT INTO admin (username, password, email, fname, lname) VALUES (?, ?, ?, ?, ?)",
@@ -47,6 +47,44 @@ app.post("/register",(req, res) => {
     );
   });
 });
+
+app.get("/manager", (req, res) => {
+  connection.query("SELECT * FROM admin", function (err, results, fields) {
+    res.send(results);
+  });
+});
+
+app.put("/update", (req, res) => {
+  bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+    const username = req.body.username;
+    const email = req.body.email;
+    const fname = req.body.fname;
+    const lname = req.body.lname;
+    const id = req.body.id;
+    connection.query(
+      "UPDATE admin SET username = ?, password = ?, email = ?, fname = ?, lname = ? WHERE id = ?",
+      [username, hash, email, fname, lname, id],
+      (error, results, fields) => {
+        if (error){
+          res.json({ status: "error", message: error });
+          return;
+        } 
+        res.json({ status: "ok" });
+      }
+    );
+  });
+});
+app.delete('/delete',(req, res)=>{
+  const id = req.body.id
+  connection.query( "DELETE FROM admin WHERE id = ?",[id],(error, results, fields)=>{
+    if (error){
+      res.json({ status: "error", message: error });
+      return;
+    } 
+    res.json({ status: "ok" });
+  })
+})
+
 app.post("/login", (req, res) => {
   connection.query(
     "SELECT * FROM admin WHERE email=?",
@@ -78,15 +116,14 @@ app.post("/login", (req, res) => {
   );
 });
 
-app.post('/authen', (req, res)=>{
-    try{
-        const token = req.headers.authorization
-        var decoded = jwt.verify(token, secret);
-        res.json({status: "ok", decoded})
-    }catch(err){
-         res.json({status: "error", message: err.message})
-    }
-   
-})
+app.post("/authen", (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    var decoded = jwt.verify(token, secret);
+    res.json({ status: "ok", decoded });
+  } catch (err) {
+    res.json({ status: "error", message: err.message });
+  }
+});
 
 app.listen(process.env.PORT || 3333);
