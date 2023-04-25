@@ -119,10 +119,12 @@ app.post("/login", (req, res) => {
 app.post("/authen", (req, res) => {
   try {
     const token = req.headers.authorization;
-    var decoded = jwt.verify(token, secret);
+    const tokenWithoutBearer = token.replace("Bearer ", "");
+    var decoded = jwt.verify(tokenWithoutBearer, secret);
     res.json({ status: "ok", decoded });
   } catch (err) {
-    res.json({ status: "error", message: err.message });
+    res.json({ status: "error", message: err.message});
+    
   }
 });
 
