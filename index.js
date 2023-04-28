@@ -36,18 +36,33 @@ app.get("/", (req, res) => {
 });
 
 app.get("/project", (req, res) => {
+ 
+
   connection.query("SELECT * FROM project", function (err, results, fields) {
     res.send(results);
   });
 });
 app.post("/add/project", upload.single('file'),(req, res) => {
+  if (!req.file) { // ตรวจสอบว่ามีไฟล์ที่อัพโหลดมาหรือไม่
+    return res.status(400).json({ message: "No file uploaded" });
+  }
   connection.query(
-    "INSERT INTO `project` (`name`, `description`,project_image) VALUES (?, ?, ?)",
-    [req.body.projectName , req.body.description,req.file.filename],
+    "INSERT INTO `project` (`name`, `description`, `project_image`) VALUES (?, ?, ?)",
+    [req.body.projectName, req.body.description, req.file.filename],
     function (err, results) {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Error inserting data" });
+      }
       res.json(results);
     }
   );
+}, (error, req, res, next) => { // จัดการ error ที่เกิดจาก multer
+  if (error instanceof multer.MulterError) {
+    res.status(500).json({ message: "Error uploading file" });
+  } else {
+    next(error);
+  }
 });
 
 app.post("/register", (req, res) => {
