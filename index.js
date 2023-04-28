@@ -13,6 +13,24 @@ const bcrypt = require("bcrypt");
 const saltRounds = 10;
 var jwt = require("jsonwebtoken");
 var secret = "1639900warakorn";
+
+const multer = require('multer');
+const storage = multer.diskStorage({
+    destination:function(req,file,cb){
+            cb(null,'./image')
+    },
+    filename:function(req,file,cb){
+      const extension = file.originalname.split('.').pop();
+      cb(null, `${Date.now()}.${extension}`);//เปลี่ยนชื่อไฟล์ป้องกันชื่อซ้ำ
+    }
+
+})
+
+const upload = multer({
+    storage:storage
+})
+
+
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
@@ -22,10 +40,10 @@ app.get("/project", (req, res) => {
     res.send(results);
   });
 });
-app.post("/add/project", (req, res) => {
+app.post("/add/project", upload.single('file'),(req, res) => {
   connection.query(
-    "INSERT INTO `project` (`name`, `description`, `project_image`) VALUES (?, ?, ?)",
-    [req.body.name, req.body.description, req.body.project_image],
+    "INSERT INTO `project` (`name`, `description`,project_image) VALUES (?, ?, ?)",
+    [req.body.projectName , req.body.description,req.file.filename],
     function (err, results) {
       res.json(results);
     }
