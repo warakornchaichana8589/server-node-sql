@@ -37,20 +37,7 @@ app.get("/project", (req, res) => {
   });
 
 });
-app.get("/project/:id", (req, res) => {
-  const projectId = req.params.id;
 
-  const params = {
-    Bucket: 'cyclic-cheerful-colt-shrug-ap-southeast-2',
-    Key: `${projectId}`,
-    Expires: 113600
-  };
-
-  const url = s3.getSignedUrl('getObject', params);
-
-  // ส่ง URL กลับไปใน response
-  res.json({ url: url });
-});
 app.post("/add/project",(req, res) => {
   
   if (!req.file) { // ตรวจสอบว่ามีไฟล์ที่อัพโหลดมาหรือไม่
@@ -74,7 +61,7 @@ app.post("/add/project",(req, res) => {
 
       connection.query(
         "INSERT INTO `project` (`name`, `description`, `filename`) VALUES (?, ?, ?)",
-        [req.body.projectName, req.body.description, `https://${params.Bucket}.s3-${params.region}.amazonaws.com/${s3Key}`],
+        [req.body.projectName, req.body.description, `https://${params.Bucket}.s3-ap-southeast-2.amazonaws.com/${s3Key}`],
         function (err, results) {
           if (err) {
             console.log(err);
