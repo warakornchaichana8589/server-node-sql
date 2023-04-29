@@ -4,13 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-    
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.1368.0",
     "bcrypt": "^5.1.0",
+    "bcrypt-nodejs": "^0.0.3",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
