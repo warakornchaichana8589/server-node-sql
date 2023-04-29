@@ -43,7 +43,7 @@ app.get("/project/:id", (req, res) => {
   const params = {
     Bucket: 'cyclic-cheerful-colt-shrug-ap-southeast-2',
     Key: `${projectId}`,
-    Expires: 3600
+    Expires: 113600
   };
 
   const url = s3.getSignedUrl('getObject', params);
@@ -74,7 +74,7 @@ app.post("/add/project",(req, res) => {
 
       connection.query(
         "INSERT INTO `project` (`name`, `description`, `filename`) VALUES (?, ?, ?)",
-        [req.body.projectName, req.body.description, s3Key],
+        [req.body.projectName, req.body.description, `https://${params.Bucket}.s3-${params.region}.amazonaws.com/${s3Key}`],
         function (err, results) {
           if (err) {
             console.log(err);
