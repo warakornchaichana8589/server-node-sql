@@ -10,21 +10,18 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 const bcrypt = require("bcrypt");
+
 const saltRounds = 10;
+
+
+
 var jwt = require("jsonwebtoken");
 var secret = "1639900warakorn";
 
 const AWS = require('aws-sdk');
-const fs = require('fs');
-const s3 = new AWS.S3({ region: 'ap-southeast-2' });
-AWS.config.update({
-  region: 'ap-southeast-2',
-  accessKeyId: 'ASIAU3YQSJUKMWRA7OVA',
-  secretAccessKey: 'HVqVCS52FKtCMZfG5pDLq81JU4bBOyZEDwUOZyn3',
-  sessionToken: 'IQoJb3JpZ2luX2VjEHAaCmFwLXNvdXRoLTEiRjBEAiAy1GlrKukYgFurM1Vgbm0vsAQtz5DITxyX98DUVJaxuwIgM+CDfx6I7Mbjbxp3ggaviLKWDZph9LCW2DBdeKf7iysqrQIIeRAAGgwzMzQ1MDUzMzE5ODgiDMjlididzMS+ohWvdiqKAvsfVT9B8DH0rmPVLNhZ2MDRC8n+DoQrPVcLytgPMzOdYjLKInHhCNgtFPmL642t1YNEcMJ6Ch9VnQiSSfvJZtf8D+kH60LSslSWBtka32zfxFYYBRnQCpH+G4Bgx+mZMa1wszvDNcn2SlRl3HrEqR+6Af1DEI4nIGhWQe8074sPfL9pH9Nme/BWies2C1tEx/IXcibjPEgS8qjZy0E+bdLawZRM0AXKemZpL83M3qcgQYYKvl0gpEFTo6idx+FEceMBhrqgy0OYEN88lie1d+LtGwSNa2bEf2q7or81Er6XYvQtQhHUNHksMTYRwOhjbca0tabjKhb4ZdkMHGEEXVj++8dnntWu1rjVMNaEtaIGOp4BcRCGV+1PYtnlhO7SmeNjKwDU5LXrHy/ZpSRud5jcfdctdPo4x1Zlahi+mGK9cmWHn3PSq/oDfe1oS3vEaHLIERofIYuYa17Nuz2Jy+ULMjkLjkLRgbVbnrGJMaY9Y135XmQA9wbnxH4I/f6ZLcQIngsRCO8yxhM/k8b2Drds6j/pxj7g9Yu6puIyj1O45biDeNbNiR2nwonk7+sTtF0='
-});
 
 
+const s3 = new AWS.S3()
 
 app.get("/", (req, res) => {
   res.send("Hello World");
@@ -38,30 +35,26 @@ app.get("/project", (req, res) => {
 
 });
 
-app.post("/add/project",(req, res) => {
-  
+app.put("/addworkshop", async (req, res) => {
   if (!req.file) { // ตรวจสอบว่ามีไฟล์ที่อัพโหลดมาหรือไม่
     return res.status(400).json({ message: "No file uploaded" });
   }
+  let filename = req.path.slice(1)
+  console.log(typeof req.body)
 
-  const params = {
-    Bucket:'cyclic-cheerful-colt-shrug-ap-southeast-2',
-    Key: req.file.filename,
-    Body: fs.createReadStream(req.file.path),
-    ACL: 'public-read',
-  };
+  await s3.putObject({
+    Body: JSON.stringify(req.body),
+    Bucket: process.env.BUCKET,
+    Key: filename,
+  }).promise()
 
-  s3.putObject(params, (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Failed to upload file to S3" });
-    } else {
-      
-      const s3Key = data.Key;
+  res.set('Content-type', 'text/plain')
+  res.send('ok').end()
 
+    const s3Key = data.Key;
       connection.query(
-        "INSERT INTO `project` (`name`, `description`, `filename`) VALUES (?, ?, ?)",
-        [req.body.projectName, req.body.description, `https://${params.Bucket}.s3-ap-southeast-2.amazonaws.com/${s3Key}`],
+        "INSERT INTO `project` (`name`, `description`, `urldemo`, link_image) VALUES (?, ?, ?, ?)",
+        [req.body.projectName, req.body.description, req.body.urlDemo, `https://${params.Bucket}.s3-ap-southeast-2.amazonaws.com/${s3Key}`],
         function (err, results) {
           if (err) {
             console.log(err);
@@ -70,15 +63,8 @@ app.post("/add/project",(req, res) => {
           res.json(results);
         }
       );
-
       // ลบไฟล์ที่อัพโหลดเสร็จแล้วออกจาก server
       fs.unlinkSync(req.file.path);
-      
-      
-    }
-  });
-  
- 
 });
 
 app.post("/register", (req, res) => {
