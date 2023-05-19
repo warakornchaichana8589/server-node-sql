@@ -71,23 +71,6 @@ app.get("/project", (req, res) => {
     res.send(results);
   });
 });
-
-app.get("/get-image/:image_name",(req, res) => {
-
-  const imagePath = `./image/${req.params.image_name}`
-  fs.readFile(imagePath, (err, data) => {
-    if (err) {
-      // กรณีเกิดข้อผิดพลาดในการอ่านไฟล์
-      console.error(err);
-      res.sendStatus(500);
-    } else {
-      // กำหนด Content-Type ของ response เป็น image/*
-      res.setHeader('Content-Type', 'image/*');
-      // ส่งข้อมูลรูปภาพกลับไปยังไคลเอนต์
-      res.send(data);
-    }
-  });
-})
 app.post("/addworkshop", (req, res) => {
   // , upload.single("file")
   connection.query(
