@@ -1,0 +1,18 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDAWS-6moO3Fonw0ZHALQm2RgMLh5jrjRk",
+  authDomain: "react-profile-3760b.firebaseapp.com",
+  databaseURL: "https://react-profile-3760b-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "react-profile-3760b",
+  storageBucket: "react-profile-3760b.appspot.com",
+  messagingSenderId: "162594026122",
+  appId: "1:162594026122:web:7a0ef6cb0139e41325f373"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);

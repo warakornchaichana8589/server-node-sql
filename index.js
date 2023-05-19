@@ -2,34 +2,35 @@ const express = require("express");
 require("dotenv").config();
 const cors = require("cors");
 const mysql = require("mysql2");
-const multer = require("multer");
+// const multer = require("multer");
 const bodyParser = require("body-parser");
 const app = express();
 const fs = require('fs');
+const uploadRouter = require("./controllers/upload-addworkshop");
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 const router1 = require('./controllers/time')
 app.use("/api-time",router1)
-
+app.use('/upload', uploadRouter);
 const bcrypt = require("bcrypt");
 var jwt = require("jsonwebtoken");
 var secret = "1639900warakorn";
 const saltRounds = 10;
 const connection = mysql.createConnection(process.env.DATABASE_URL);
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'image/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + ".jpg"); //เปลี่ยนชื่อไฟล์ป้องกันชื่อซ้ำ
-  },
-});
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, 'image/');
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, Date.now() + ".jpg"); //เปลี่ยนชื่อไฟล์ป้องกันชื่อซ้ำ
+//   },
+// });
 
-const upload = multer({
-  storage: storage,
-});
+// const upload = multer({
+//   storage: storage,
+// });
 
 app.post("/login", (req, res) => {
   connection.query(
@@ -87,8 +88,8 @@ app.get("/get-image/:image_name",(req, res) => {
     }
   });
 })
-app.post("/addworkshop", upload.single("file"), (req, res) => {
-  
+app.post("/addworkshop", (req, res) => {
+  // , upload.single("file")
   connection.query(
     "INSERT INTO project (name, description, urldemo, image_name) VALUES (?, ?, ?, ?)",
     [
