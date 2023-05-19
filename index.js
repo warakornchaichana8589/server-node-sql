@@ -2,123 +2,34 @@ const express = require("express");
 require("dotenv").config();
 const cors = require("cors");
 const mysql = require("mysql2");
+const multer = require("multer");
 const bodyParser = require("body-parser");
 const app = express();
-const connection = mysql.createConnection(process.env.DATABASE_URL);
+const fs = require('fs');
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+const router1 = require('./controllers/time')
+app.use("/api-time",router1)
+
 const bcrypt = require("bcrypt");
-
-const saltRounds = 10;
-
-
-
 var jwt = require("jsonwebtoken");
 var secret = "1639900warakorn";
-
-const AWS = require('aws-sdk');
-
-
-const s3 = new AWS.S3()
-
-app.get("/", (req, res) => {
-  res.send("Hello World");
+const saltRounds = 10;
+const connection = mysql.createConnection(process.env.DATABASE_URL);
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'image/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + ".jpg"); //เปลี่ยนชื่อไฟล์ป้องกันชื่อซ้ำ
+  },
 });
 
-app.get("/project", (req, res) => {
- 
-  connection.query("SELECT * FROM project", function (err, results, fields) {
-    res.send(results);
-  });
-
+const upload = multer({
+  storage: storage,
 });
-
-app.put("/addworkshop", async (req, res) => {
-  if (!req.file) { // ตรวจสอบว่ามีไฟล์ที่อัพโหลดมาหรือไม่
-    return res.status(400).json({ message: "No file uploaded" });
-  }
-  let filename = req.path.slice(1)
-  console.log(typeof req.body)
-
-  await s3.putObject({
-    Body: JSON.stringify(req.body),
-    Bucket: process.env.BUCKET,
-    Key: filename,
-  }).promise()
-
-  res.set('Content-type', 'text/plain')
-  res.send('ok').end()
-
-    const s3Key = data.Key;
-      connection.query(
-        "INSERT INTO `project` (`name`, `description`, `urldemo`, link_image) VALUES (?, ?, ?, ?)",
-        [req.body.projectName, req.body.description, req.body.urlDemo, `https://${params.Bucket}.s3-ap-southeast-2.amazonaws.com/${s3Key}`],
-        function (err, results) {
-          if (err) {
-            console.log(err);
-            return res.status(500).json({ message: "Error inserting data" });
-          }
-          res.json(results);
-        }
-      );
-      // ลบไฟล์ที่อัพโหลดเสร็จแล้วออกจาก server
-      fs.unlinkSync(req.file.path);
-});
-
-app.post("/register", (req, res) => {
-  bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
-    connection.query(
-      "INSERT INTO admin (username, password, email, fname, lname) VALUES (?, ?, ?, ?, ?)",
-      [req.body.username, hash, req.body.email, req.body.fname, req.body.lname],
-      function (err, results, fields) {
-        if (err) {
-          res.json({ status: "error", message: err });
-          return;
-        }
-        res.json({ status: "ok" });
-      }
-    );
-  });
-});
-
-app.get("/manager", (req, res) => {
-  connection.query("SELECT * FROM admin", function (err, results, fields) {
-    res.send(results);
-  });
-});
-
-app.put("/update", (req, res) => {
-  bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
-    const username = req.body.username;
-    const email = req.body.email;
-    const fname = req.body.fname;
-    const lname = req.body.lname;
-    const id = req.body.id;
-    connection.query(
-      "UPDATE admin SET username = ?, password = ?, email = ?, fname = ?, lname = ? WHERE id = ?",
-      [username, hash, email, fname, lname, id],
-      (error, results, fields) => {
-        if (error){
-          res.json({ status: "error", message: error });
-          return;
-        } 
-        res.json({ status: "ok" });
-      }
-    );
-  });
-});
-app.delete('/delete',(req, res)=>{
-  const id = req.body.id
-  connection.query( "DELETE FROM admin WHERE id = ?",[id],(error, results, fields)=>{
-    if (error){
-      res.json({ status: "error", message: error });
-      return;
-    } 
-    res.json({ status: "ok" });
-  })
-})
 
 app.post("/login", (req, res) => {
   connection.query(
@@ -150,6 +61,94 @@ app.post("/login", (req, res) => {
     }
   );
 });
+app.get("/", (req, res) => {
+  res.send("Hello World");
+});
+
+app.get("/project", (req, res) => {  
+  connection.query("SELECT * FROM project", function (err, results, fields) {
+    res.send(results);
+  });
+});
+
+app.get("/get-image/:image_name",(req, res) => {
+
+  const imagePath = `./image/${req.params.image_name}`
+  fs.readFile(imagePath, (err, data) => {
+    if (err) {
+      // กรณีเกิดข้อผิดพลาดในการอ่านไฟล์
+      console.error(err);
+      res.sendStatus(500);
+    } else {
+      // กำหนด Content-Type ของ response เป็น image/*
+      res.setHeader('Content-Type', 'image/*');
+      // ส่งข้อมูลรูปภาพกลับไปยังไคลเอนต์
+      res.send(data);
+    }
+  });
+})
+app.post("/addworkshop", upload.single("file"), (req, res) => {
+  
+  connection.query(
+    "INSERT INTO project (name, description, urldemo, image_name) VALUES (?, ?, ?, ?)",
+    [
+      req.body.projectName,
+      req.body.description,
+      req.body.urlDemo,
+      req.file.filename,
+    ],
+    function (err, results) {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Error inserting data" });
+      }
+      res.json(results);
+    }
+  );
+});
+
+app.get("/manager", (req, res) => {
+  connection.query("SELECT * FROM admin", function (err, results, fields) {
+    res.send(results);
+  });
+});
+
+app.put("/update", (req, res) => {
+  bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+    const username = req.body.username;
+    const email = req.body.email;
+    const fname = req.body.fname;
+    const lname = req.body.lname;
+    const id = req.body.id;
+    connection.query(
+      "UPDATE admin SET username = ?, password = ?, email = ?, fname = ?, lname = ? WHERE id = ?",
+      [username, hash, email, fname, lname, id],
+      (error, results, fields) => {
+        if (error) {
+          res.json({ status: "error", message: error });
+          return;
+        }
+        res.json({ status: "ok" });
+      }
+    );
+  });
+});
+app.delete("/delete", (req, res) => {
+  const id = req.body.id;
+  connection.query(
+    "DELETE FROM admin WHERE id = ?",
+    [id],
+    (error, results, fields) => {
+      if (error) {
+        res.json({ status: "error", message: error });
+        return;
+      }
+      res.json({ status: "ok" });
+    }
+  );
+});
+
+
 
 app.post("/authen", (req, res) => {
   try {
@@ -158,8 +157,7 @@ app.post("/authen", (req, res) => {
     var decoded = jwt.verify(tokenWithoutBearer, secret);
     res.json({ status: "ok", decoded });
   } catch (err) {
-    res.json({ status: "error", message: err.message});
-    
+    res.json({ status: "error", message: err.message });
   }
 });
 
